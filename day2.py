@@ -6,7 +6,7 @@ def part1(rounds):
     for opp, me in rounds:
         if opp == me:
             total += 3 + score_dict[me]
-        elif ord(opp) - ord(me) in [1,-2]:
+        elif (ord(opp) - ord(me)) % 3 == 1:
             total += score_dict[me]
         else:
             total += 6 + score_dict[me]
@@ -32,7 +32,7 @@ def parse_input():
         for l in f.readlines():
             line = l.strip()
             opp, me = l.split()
-            me = chr(ord(me) - normalize_diff)
+            me = chr(ord(me) - normalize_diff) # X,Y,Z to A,B,C respectively
             rounds.append([opp,me])
     return rounds
 
