@@ -1,5 +1,4 @@
 def part1(stacks, moves):
-    print(stacks)
     for amt, src, dst in moves:
         src -= 1 # input stack numbers are 1-based
         dst -= 1
@@ -10,7 +9,6 @@ def part1(stacks, moves):
     print(f"Part 1: {top_crates}")
 
 def part2(stacks, moves):
-    print(stacks)
     for amt, src, dst in moves:
         src -= 1 # input stack numbers are 1-based
         dst -= 1
@@ -21,16 +19,21 @@ def part2(stacks, moves):
     print(f"Part 2: {top_crates}")
 
 def parse_input():
-    stacks = [[] for i in range(9)]
+    stacks_dict = {}
     moves = []
     with open('inputs/day5.txt') as f:
         for line in f.readlines():
             if line[0] == '[':
                 for count, c in enumerate(line.strip()):
                     if c == '[':
-                        stacks[count // 4].append(line[count+1])
+                        col = count // 4
+                        if col not in stacks_dict:
+                            stacks_dict[col] = []
+                        stacks_dict[col].append(line[count+1])
             elif line[0] == 'm':
                 moves.append(parse_move_line(line.strip()))
+    
+    stacks = [stacks_dict[col] for col in range(len(stacks_dict))]
     return stacks, moves
 
 def parse_move_line(line):
