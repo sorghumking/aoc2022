@@ -32,10 +32,14 @@ def part1(cmds):
 
     sizes = []
     root_size = get_size(root_dir, sizes)
-    sizes.append(('/', root_size))
     print(sizes)
 
     print(f"Total of dirs < 100000: {sum([s[1] for s in sizes if s[1] <= 100000])}")
+
+    unused_space = 70000000 - root_size
+    candidates = [s[1] for s in sizes if s[1]+unused_space >= 30000000]
+    print(f"unused space: {unused_space}")
+    print(f"Smallest deletion candidate size: {min(candidates)}")
 
 def get_size(dir, sizes):
     sz = 0
