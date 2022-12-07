@@ -1,9 +1,8 @@
-
 def find_marker(seq, seq_len, test):
     for idx in range(len(seq)-seq_len):
-        quad = seq[idx:idx+seq_len]
-        if test(quad):
-            print(f"Found marker {quad}, count {idx+seq_len}")
+        subseq = seq[idx:idx+seq_len]
+        if test(subseq):
+            print(f"Found marker {subseq}, count {idx+seq_len}")
             break
 
 def part1(seq):
