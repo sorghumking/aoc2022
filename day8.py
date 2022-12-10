@@ -20,10 +20,10 @@ def right(trees, r, c):
     return trees[r][c+1:]
 
 def left(trees, r, c):
-    return list(reversed(trees[r][:c]))
+    return list(reversed(trees[r][:c])) # reverse for part2 view calc
 
 def up(trees, r, c):
-    return list(reversed([trees[row][c] for row in range(r)]))
+    return list(reversed([trees[row][c] for row in range(r)])) # reverse for part2 view calc
 
 def down(trees, r, c):
     return [trees[row][c] for row in range(r+1, len(trees))]
@@ -56,7 +56,6 @@ def calc_score(trees, row, col):
         score *= view_dist
     return score
 
-
 def parse_input():
     trees = []
     with open('inputs/day8.txt') as f:
@@ -64,8 +63,7 @@ def parse_input():
             trees.append([int(tree) for tree in line.strip()])
     return trees
 
-
 if __name__ == "__main__":
     trees = parse_input()
-    # part1(trees)
+    part1(trees)
     part2(trees)
