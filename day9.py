@@ -5,6 +5,20 @@ class Point:
     x: int
     y: int
 
+def adjacent(head, tail):
+    return abs(head.x - tail.x) <= 1 and abs(head.y - tail.y) <= 1
+
+# Determine where tail needs to move; return delta x and y.
+# Assumes head and tail are not adjacent.
+def get_deltas(head, tail):
+    dx = 0
+    dy = 0
+    if head.x != tail.x:
+        dx = 1 if head.x > tail.x else -1
+    if head.y != tail.y:
+        dy = 1 if head.y > tail.y else -1
+    return dx, dy
+
 dir_dict = {'R':1, 'L':-1, 'U':1, 'D':-1}
 
 def part1(moves):
@@ -22,46 +36,31 @@ def part1(moves):
                 tail.x += dx
                 tail.y += dy
                 visited.append((tail.x, tail.y))
-    print(f"Total points visited: {len(set(visited))}")
-
-# assumes head and tail are not adjacent
-def get_deltas(head, tail):
-    dx = 0
-    dy = 0
-    if head.x != tail.x:
-        dx = 1 if head.x > tail.x else -1
-    if head.y != tail.y:
-        dy = 1 if head.y > tail.y else -1
-    return dx, dy
-
+    print(f"Part 1: Total points visited: {len(set(visited))}")
 
 def part2(moves):
     head = Point(0,0)
-    tail = Point(0,0)
-    knots = [Point(0,0) for _ in range(8)]
+    knots = [Point(0,0) for _ in range(9)]
     visited = set([(0,0)])
     for dir, amt in moves:
-        for step in range(amt):
+        for _ in range(amt):
             if dir in ['L', 'R']:
                 head.x += dir_dict[dir]
             else:
                 head.y += dir_dict[dir]
-            if not adjacent(head, tail):
-                dx, dy = get_deltas(head, tail)
-                tail.x += dx
-                tail.y += dy
-                prev_knot = tail
-                for idx, k in enumerate(knots):
-                    if not adjacent(prev_knot, k):
-                        dx, dy = get_deltas(prev_knot, k)
-                        k.x += dx
-                        k.y += dy
-                        prev_knot = k
-                        if idx == len(knots) - 1:
-                            visited.add((k.x, k.y))
-                    else:
-                        break
-    print(f"Total points visited by tail: {len(visited)}")
+            prev_knot = head
+            for idx, k in enumerate(knots):
+                if not adjacent(prev_knot, k):
+                    dx, dy = get_deltas(prev_knot, k)
+                    k.x += dx
+                    k.y += dy
+                    prev_knot = k
+                    if idx == len(knots) - 1:
+                        visited.add((k.x, k.y))
+                else:
+                    break
+
+    print(f"Part 2: Total points visited: {len(visited)}")
 
 def draw(head, tail, knots):
     for y in list(reversed(range(5))):
@@ -80,9 +79,6 @@ def draw(head, tail, knots):
                 if blank:
                     print('.', end='')
         print('\n')
-
-def adjacent(head, tail):
-    return abs(head.x - tail.x) <= 1 and abs(head.y - tail.y) <= 1
 
 def parse_input():
     moves = []
