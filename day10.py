@@ -4,13 +4,9 @@ class CPU:
     to_add = None
     req_cycles = 0
 
-    def noop(self):
-        self.step()
-
     def addx(self, amt):
         self.to_add = amt
         self.req_cycles = 2
-        self.step()
 
     def ready(self):
         return self.req_cycles == 0
@@ -27,24 +23,6 @@ class CPU:
             # print(f"End of cycle {self.cycle}, adding {self.to_add} X={self.X}")
             self.to_add = None
 
-def part1(program):
-    strength = 0
-    cpu = CPU()
-    for inst in program:
-        if inst[0] == 'noop':
-            cpu.noop()
-        else:
-            cpu.addx(inst[1])
-        while True:
-            if cpu.cycle in [20, 60, 100, 140, 180, 220]:
-                strength += cpu.X * cpu.cycle
-                # print(f"During cycle {cpu.cycle} X={cpu.X}, strength={cpu.X*cpu.cycle}")
-            if cpu.ready():
-                cpu.end()
-                break
-            else:
-                cpu.step()
-    print(f"Signal strength: {strength}")
 
 class CRT:
     lines = []
@@ -62,22 +40,40 @@ class CRT:
         self.sprite_pos = new_pos
 
     def new_line(self):
-        self.lines.append(self.cur_line)
-        self.cur_line = []
+        if self.cur_line != []:
+            self.lines.append(self.cur_line)
+            self.cur_line = []
 
     def render(self):
         for line in self.lines:
             print(''.join(line))
 
 
+def part1(program):
+    strength = 0
+    cpu = CPU()
+    for inst in program:
+        if inst[0] == 'addx':
+            cpu.addx(inst[1])
+        cpu.step()
+        while True:
+            if cpu.cycle in [20, 60, 100, 140, 180, 220]:
+                strength += cpu.X * cpu.cycle
+                # print(f"During cycle {cpu.cycle} X={cpu.X}, strength={cpu.X*cpu.cycle}")
+            if cpu.ready():
+                cpu.end()
+                break
+            else:
+                cpu.step()
+    print(f"Signal strength: {strength}")
+
 def part2(program):
     cpu = CPU()
     crt = CRT()
     for inst in program:
-        if inst[0] == 'noop':
-            cpu.noop()
-        else:
+        if inst[0] == 'addx':
             cpu.addx(inst[1])
+        cpu.step()
         while True:
             if (cpu.cycle-1) % 40 == 0:
                 crt.new_line()
