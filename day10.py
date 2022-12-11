@@ -1,4 +1,4 @@
-class CPU():
+class CPU:
     X = 1
     cycle = 0
     to_add = None
@@ -46,6 +46,50 @@ def part1(program):
                 cpu.step()
     print(f"Signal strength: {strength}")
 
+class CRT:
+    lines = []
+    cur_line = []
+    sprite_pos = 1
+
+    def draw(self, cycle):
+        pix = (cycle-1) % 40
+        if self.sprite_pos - 1 <= pix <= self.sprite_pos + 1:
+            self.cur_line.append('#')
+        else:
+            self.cur_line.append('.')
+
+    def move_sprite(self, new_pos):
+        self.sprite_pos = new_pos
+
+    def new_line(self):
+        self.lines.append(self.cur_line)
+        self.cur_line = []
+
+    def render(self):
+        for line in self.lines:
+            print(''.join(line))
+
+
+def part2(program):
+    cpu = CPU()
+    crt = CRT()
+    for inst in program:
+        if inst[0] == 'noop':
+            cpu.noop()
+        else:
+            cpu.addx(inst[1])
+        while True:
+            if (cpu.cycle-1) % 40 == 0:
+                crt.new_line()
+            crt.draw(cpu.cycle)
+            if cpu.ready():
+                cpu.end()
+                crt.move_sprite(cpu.X)
+                break
+            else:
+                cpu.step()
+    crt.new_line()
+    crt.render()
 
 def parse_input():
     program = []
@@ -62,3 +106,4 @@ def parse_input():
 if __name__ == "__main__":
     program = parse_input()
     part1(program)
+    part2(program)
