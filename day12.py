@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import heapq
 
 @dataclass
 class Point:
@@ -10,6 +11,9 @@ class Point:
 
     def __hash__(self):
         return tuple.__hash__((self.x, self.y))
+
+    def __lt__(self, other):
+        return (self.x, self.y) < (other.x, other.y)
 
 @dataclass
 class Grid:
@@ -24,56 +28,96 @@ class Grid:
         return (0 <= pos.x < self.width) and (0 <= pos.y < self.height)
 
 
+# I am too dumb to derive Dijkstra's Algorithm myself. Here is my slow
+# impl from AoC 2021 Day 15.
+def dijkstra(grid: Grid, start_pos: Point, end_pos: Point):
+    verts = set()
+    dists = {}
+    prevs = {}
+
+    for y in range(grid.height):
+        for x in range(grid.width):
+            dists[Point(x,y)] = float('inf') # infinity
+            prevs[Point(x,y)] = None
+            verts.add(Point(x,y))
+    dists[start_pos] = 0
+    
+    while len(verts) > 0:
+        if len(verts) % 1000 == 0:
+            print(f"{len(verts)}, ", end='')
+        v = min(verts, key=lambda v:dists[v]) # this is the bottleneck
+        verts.remove(v)
+        if v == end_pos:
+            break
+        for pt in possible_moves(grid, v):
+            if pt in verts:
+                new_dist = dists[v] + 1
+                if new_dist < dists[pt]:
+                    dists[pt] = new_dist
+                    prevs[pt] = v
+    return dists, prevs
+
+# Adapated heapq implementation of Dijkstra from AoC 2021 Day 15 
+def dijkstra_heapq(grid: Grid, start_pos: Point, end_pos: Point):
+    verts = [(0, start_pos, [])]
+    dists = {}
+    for y in range(grid.height):
+        for x in range(grid.width):
+            dists[Point(x,y)] = float('inf') # infinity
+    dists[start_pos] = 0
+    seen = set()
+
+    while True:
+        try:
+            dist, v, path = heapq.heappop(verts)
+        except IndexError:
+            # If we run out of verts before reaching the goal, it means
+            # the goal is unreachable from the given point.
+            return -1, None
+        if v not in seen:
+            seen.add(v)
+            if v == end_pos:
+                return dist, path + [v]
+            for pt in possible_moves(grid, v):
+                if dist + 1 < dists[pt]:
+                    dists[pt] = dist + 1
+                    heapq.heappush(verts, (dist + 1, pt, path + [v]))
+
 
 def part1(grid: Grid, start: Point, goal: Point):
-    cur_pos = start
-    path = [cur_pos]
-    visited = set([cur_pos])
-    moves = possible_moves(grid, cur_pos, path)
-    for new_pos in moves:
-        if do_move(grid, new_pos, goal, path, visited):
-            print(f"Found path of length {len(path)} to goal!")
-            print(path)
-            break
+    risk, _ = dijkstra_heapq(grid, start, goal)
+    print(f"Best distance to goal is {risk}")
 
 
-def do_move(grid: Grid, pos: Point, goal: Point, path: list[Point], visited: set[Point]):
-    path.append(pos)
-    # visited.add(pos)
-    # print(path)
-    # print(f"cur: {pos}, path: {path}")
-    if pos == goal:
-        return True
-    moves = possible_moves(grid, pos, path)
-    # if len(moves) == 0:
-        # visited.add(pos)
-    for new_pos in moves:
-        if new_pos in path or new_pos in visited:
+def part2(grid: Grid, goal: Point):
+    a_points = []
+    for y in range(grid.height):
+        for x in range(grid.width):
+            if grid.get_height(Point(x,y)) == 'a':
+                a_points.append(Point(x,y))
+    
+    min_dist = 10000
+    for apt in a_points:
+        dist, _ = dijkstra_heapq(grid, apt, goal)
+        if dist == -1:
+            print(f"No path from {apt}")
             continue
-        if do_move(grid, new_pos, goal, path, visited):
-            return True
-        else:
-            path.pop()
-            # visited.remove(new_pos)
-    return False
+        if dist < min_dist:
+            min_dist = dist
+    print(f"Best distance from any a is {min_dist}")
 
-def possible_moves(grid: Grid, pos: Point, path: list[Point]):
+def possible_moves(grid: Grid, pos: Point):
     moves = []
     cur_hit = grid.get_height(pos)
     for next_pos in [Point(pos.x+1,pos.y), Point(pos.x-1,pos.y), Point(pos.x,pos.y+1), Point(pos.x,pos.y-1)]:
         if not grid.in_grid(next_pos):
-            # print(f"{next_pos} not in grid")
             continue
-        elif next_pos in path:
-            # print(f"{next_pos} already in path")
-            continue
-        # print(f"cur height: {cur_hit}, pos {next_pos} height: {grid.get_height(next_pos)}, ", end='')
         if ord(grid.get_height(next_pos)) - 1 <= ord(cur_hit):
             moves.append(next_pos)
     return moves
 
 def parse_input():
-    with open('inputs/day12ex.txt') as f:
+    with open('inputs/day12.txt') as f:
         lines = [l.strip() for l in f.readlines()]
         grid = []
         for y, line in enumerate(lines):
@@ -93,3 +137,4 @@ def parse_input():
 if __name__ == "__main__":
     grid, start, end = parse_input()
     part1(grid, start, end)
+    part2(grid, end)
