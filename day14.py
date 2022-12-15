@@ -1,3 +1,39 @@
+def set(rocks, coord):
+    rocks[coord[1]][coord[0]] = 'o'
+
+def at(rocks, coord):
+    return rocks[coord[1]][coord[0]]
+
+def get_next(coord):
+    return [(coord[0], coord[1]+1), (coord[0]-1, coord[1]+1), (coord[0]+1, coord[1]+1)]
+
+def move_sand(rocks, sand_pos):
+    moved = False
+    for next_pos in get_next(sand_pos):
+        if at(rocks, next_pos) == '.':
+            sand_pos = next_pos
+            moved = True
+            break
+    if moved:
+        if sand_pos[1] >= len(rocks) - 1:
+            return False # into the abyss!
+        return move_sand(rocks, sand_pos)
+    set(rocks, sand_pos)
+    return True # came to rest
+        
+def part1(rocks, min_x):
+    count = 0
+    while True:
+        sand_pos = (500-min_x, 0)
+        came_to_rest = move_sand(rocks, sand_pos)
+        if not came_to_rest:
+            break
+        else:
+            count += 1
+        # for row in rocks:
+            # print(''.join(row))
+        # print('-----------------------------')
+    print(f"{count} grains of sand came to rest.")
 
 
 def parse_input():
@@ -6,7 +42,7 @@ def parse_input():
     max_x = -1
     min_y = 10000
     max_y = -1
-    with open('inputs/day14ex.txt') as f:
+    with open('inputs/day14.txt') as f:
         for line in f.readlines():
             line = line.strip()
             str_coords = line.split(" -> ")
@@ -25,6 +61,11 @@ def parse_input():
                     max_y = y
                 path.append((x, y))
             rock_paths.append(path)
+    # adjust min_x, max_x, max_y to ensure empty space for sand to
+    # fall into abyss without IndexErrors
+    min_x -= 1
+    max_x += 1
+    max_y += 1
     return rock_paths, min_x, max_x, min_y, max_y
 
 # Return grid (list of lists) with rock positions, all x values
@@ -59,5 +100,4 @@ def prep_rocks(rock_paths, min_x, max_x, max_y):
 if __name__ == "__main__":
     rock_paths, min_x, max_x, min_y, max_y = parse_input()
     rocks = prep_rocks(rock_paths, min_x, max_x, max_y)
-    for row in rocks:
-        print(''.join(row))
+    part1(rocks, min_x)
