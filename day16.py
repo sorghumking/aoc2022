@@ -1,5 +1,6 @@
 import re
 from dataclasses import dataclass
+from itertools import permutations
 
 @dataclass
 class Node:
@@ -67,11 +68,31 @@ def next_node(loc, time, nodes_to_visit, bests):
             continue
         dist = len(bests[loc][n.valve])
         score = (time - dist - 1) * n.flow_rate
-        # print(f"{n.valve} score: {time} - {dist} - 1 * {n.flow_rate} = {score}")
+        print(f"{n.valve} score: {time} - {dist} - 1 * {n.flow_rate} = {score}")
         if score > max_score:
             max_score = score
             route = bests[loc][n.valve]
     return route
+
+def next_node_dist(loc, time, nodes_to_visit, bests):
+    min_dist = 100000
+    candidates = []
+    # route = None
+    for n in nodes_to_visit:
+        if loc == n.valve:
+            continue
+        dist = len(bests[loc][n.valve])
+        if dist < min_dist:
+            min_dist = dist
+        if dist == min_dist:
+            candidates.append((dist, n))
+            # route = bests[loc][n.valve]
+    candidates = [c for c in candidates if c[0] == min_dist]
+    if len(candidates) > 1:
+        dest = max(candidates, key=lambda c:c[1].flow_rate)[1]
+    else:
+        dest = candidates[0][1]
+    return bests[loc][dest.valve]
 
 @dataclass
 class FlowTracker:
@@ -85,54 +106,19 @@ class FlowTracker:
         self.flow_rate += rate
 
 
-# def part1(nodes):
-#     bests = best_routes(nodes, nodes['AA'])
-#     tracker = FlowTracker()
-#     loc = 'AA'
-#     time = 30
-#     poop = False
-#     while time > 0:
-#         print(f"Minute {30-time+1}: flow rate = {tracker.flow_rate}, {tracker.pressure_released} released.")
-#         if not poop:
-#             nodes_to_visit = [n for n in nodes.values() if n.flow_rate > 0 and not n.valve_open]
-#         else:
-#             nodes_to_visit = []
-#         if len(nodes_to_visit) == 0:
-#             time -= 1
-#             tracker.update()
-#             continue
-#         dest_route = next_node(loc, time, nodes_to_visit, bests)
-#         print(f"Next destination: {dest_route[-1]}")
-#         for step in dest_route:
-#             print(f"Minute {30-time+1}: moving to {step}")
-#             loc = step
-#             time -= 1
-#             tracker.update()
-#             if time == 0:
-#                 break
-#             if nodes[step] in nodes_to_visit:
-#                 if not nodes[step].valve_open:
-#                     print(f"Minute {30-time+1}: opening valve {step} with flow rate = {nodes[step].flow_rate}")
-#                     nodes[step].open()
-#                     time -= 1
-#                     if time > 0:
-#                         tracker.update()
-#                         tracker.increase_rate(nodes[step].flow_rate)
-#                         # poop = True
-#             if time == 0:
-#                 break
-#     print(f"Total pressure released: {tracker.pressure_released}")
-
 def part1(nodes):
-    bests = best_routes(nodes, nodes['AA'])
+    bests = best_routes(nodes, start_node=nodes['AA'])
     tracker = FlowTracker()    
     loc = 'AA'
     time = 30
-    nodes_to_visit = [nodes['DD'], nodes['BB'], nodes['JJ'], nodes['HH'], nodes['EE'], nodes['CC']]
-    route = bests['AA']['DD']
+    # nodes_to_visit = [nodes['DD'], nodes['BB'], nodes['JJ'], nodes['HH'], nodes['EE'], nodes['CC']]
+    # route = bests['AA']['DD']
+    nodes_to_visit = [n for n in nodes.values() if n.flow_rate > 0]
+    route = next_node_dist(loc, time, nodes_to_visit, bests)
     while time > 0:
         tracker.update()
         print(f"Start of minute {30 - time + 1}, rate {tracker.flow_rate}, pressure released: {tracker.pressure_released}")
+        # what if we enounter a valve en route?
         if len(route) == 0: # reached destination, open valve if possible
             if not nodes[loc].valve_open:
                 nodes[loc].open()
@@ -140,9 +126,9 @@ def part1(nodes):
                 tracker.increase_rate(nodes[loc].flow_rate)
                 nodes_to_visit.pop(nodes_to_visit.index(nodes[loc]))
             if len(nodes_to_visit) > 0: # find next route
-                route = bests[loc][nodes_to_visit[0].valve]
-                # route = next_node(loc, time, nodes_to_visit, bests) # my dumb next node method
-        else: # move to next node
+                # route = bests[loc][nodes_to_visit[0].valve]
+                route = next_node_dist(loc, time, nodes_to_visit, bests) # my dumb next node method
+        else: # move to next node in route
             loc = route[0]
             route.pop(0)
         time -= 1
@@ -164,6 +150,3 @@ def parse_input():
 if __name__ == "__main__":
     nodes = parse_input()
     part1(nodes)
-    # foobar(nodes)
-    # for key, n in nodes.items():
-        # print(f"Valve {key}, flow rate {n.flow_rate}, tunnels {n.tunnels}")
